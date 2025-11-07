@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Request Runner (Tab-Origin)",
+  "name": "Atomic Fuel Runner",
   "version": "1.0.0",
   "action": { "default_popup": "popup.html" },
   "permissions": ["activeTab", "scripting", "storage"],
