@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Atomic Fuel Runner</title>
+    <link rel="stylesheet" href="vendor/prism/prism.css" />
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font: 13px/1.35 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        margin: 12px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 360px;
+      }
+      label {
+        display: block;
+        margin: 8px 0 4px;
+        font-weight: 600;
+      }
+      input[type="text"],
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .row > * {
+        flex: 1;
+      }
+      button {
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+      .btn-ghost {
+        background: #fff;
+        border: 1px solid #d0d7de;
+      }
+      .small {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      .status {
+        font-weight: 700;
+      }
+      .danger {
+        color: #b60205;
+      }
+      .note {
+        margin-top: 6px;
+      }
+      .results {
+        display: grid;
+        grid-template-rows: auto 1fr 1fr;
+        gap: 8px;
+        min-height: 0;
+        flex: 1;
+      }
+      /* Make code panes scroll nicely */
+      pre {
+        margin: 0;
+        height: 100%;
+        overflow: auto;
+      }
+      .result {
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <select id="method">
+        <option>GET</option>
+        <option>POST</option>
+        <option>PUT</option>
+        <option>PATCH</option>
+        <option>DELETE</option>
+      </select>
+      <input
+        id="url"
+        type="text"
+        placeholder="https://your-api-endpoint.com/resource"
+      />
+    </div>
+
+    <label for="headers">Headers (JSON object)</label>
+    <textarea
+      id="headers"
+      placeholder='{"Accept":"application/json"}'
+    ></textarea>
+
+    <label for="body">Body (raw)</label>
+    <textarea id="body" placeholder='{"name":"value"}'></textarea>
+
+    <div class="row">
+      <label class="small"
+        ><input type="checkbox" id="runInTab" checked /> Run in active tab
+        origin (uses your cookies)</label
+      >
+      <span></span>
+      <button id="send">Send</button>
+      <button id="clear" class="btn-ghost">Clear</button>
+    </div>
+
+    <div class="note small">
+      Use the <em>same origin</em> as your API (e.g., open
+      <strong>dev.azure.com</strong> for ADO).
+      <strong>github.com</strong> cookies won’t auth
+      <strong>api.github.com</strong>; send
+      <code>Authorization: Bearer &lt;token&gt;</code>.
+    </div>
+
+    <hr />
+
+    <div class="results">
+      <div id="out-status" class="status"></div>
+
+      <!-- Headers -->
+      <div id="headers-wrap" class="result" style="display: none">
+        <pre><code id="out-headers" class="language-json"></code></pre>
+      </div>
+
+      <!-- Body -->
+      <div id="body-wrap" class="result" style="display: none">
+        <pre><code id="out-body" class="language-json"></code></pre>
+      </div>
+    </div>
+
+    <script src="vendor/prism/prism.js"></script>
+
+    <script src="panel.js"></script>
+  </body>
+</html>
