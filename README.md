@@ -1,36 +1,58 @@
-# Atomic Fuel Runner
+# Atomic Fuel Runner (API JSON) — Chrome/Edge Side Panel Extension
+
+> **Authorship note:** This project was primarily authored **with AI assistance** (ChatGPT). The maintainer reviewed, tested, and approved all changes.
+
+<img width="1908" height="583" alt="screenshot" src="https://github.com/user-attachments/assets/bdc6f00e-4d92-4f9a-b3d4-0c7f5b7d7375" />
+
+Once installed 
+
+<img width="340" height="154" alt="image" src="https://github.com/user-attachments/assets/ff7e718a-32ad-42d3-bc9d-e3cabf96886b" />
 
 A tiny Chrome/Edge extension that lets you quickly fire API requests **from your browser context**, so you can:
 
 * Reuse your current tab’s cookies/sessions (e.g., `dev.azure.com`)
-* Hand‑craft headers and a raw body
-* See response status, headers, and pretty‑printed JSON
+* Hand‑craft headers and raw body
+* See response status, response headers, and pretty‑printed JSON
+* Keep the tool **open and resizable** in the **Side Panel**
 
 Great for poking at ADO, internal APIs, or any endpoint where your browser session already has auth.
 
 ---
 
+## What’s new (Panel version)
+
+* **Side Panel UI** (no more popup): resizable and persistent while you browse.
+* **Prism** syntax highlighting for JSON responses.
+* **Clear output** button.
+
+---
+
 ## Features
 
-* **Run in active tab origin**: executes a `fetch()` in the page context so cookies and same‑site rules apply.
-* **Manual headers**: paste a JSON object of headers (e.g., `{"Content-Type":"application/json"}`).
+* **Run in active tab origin**: executes `fetch()` in the page context so cookies and SameSite rules apply.
+* **Manual headers**: paste a JSON object of headers (e.g., `{ "Content-Type": "application/json" }`).
 * **Raw body**: send raw text (JSON, form data, etc.).
-* **Status + inspectors**: shows HTTP code, response headers, and body (auto‑pretty JSON).
+* **Status + inspectors**: HTTP code, response headers, and body (auto‑pretty JSON + Prism highlighting).
 * **Persists inputs**: last URL/method/headers/body are saved locally.
 
-> ⚠️ GitHub note: `github.com` cookies do **not** authenticate `api.github.com` requests due to cross‑site rules. Use a header: `Authorization: Bearer <token>`.
+> **GitHub note:** `github.com` cookies do **not** authenticate `api.github.com` requests due to cross‑site rules. Use a header: `Authorization: Bearer <token>`.
 
 ---
 
 ## Repo Layout
 
-```
+```none
 ├── README.md
-└── api-requester
+└── api-requester/
+    ├── background.js
     ├── icon128.png
     ├── manifest.json
-    ├── popup.html
-    └── popup.js
+    ├── panel.html
+    ├── panel.js
+    └── vendor/
+        └── prism/
+            ├── prism.css
+            └── prism.js
 ```
 
 ---
@@ -43,12 +65,14 @@ Great for poking at ADO, internal APIs, or any endpoint where your browser sessi
 2. Go to **chrome://extensions**.
 3. Toggle **Developer mode** (top‑right).
 4. Click **Load unpacked** and select the `api-requester` folder.
+5. Click the extension’s toolbar icon to open it in the **Side Panel**.
 
 ### Microsoft Edge
 
 1. Go to **edge://extensions**.
 2. Toggle **Developer mode**.
 3. Click **Load unpacked** and select the `api-requester` folder.
+4. Click the extension’s toolbar icon to open it in the **Side Panel**.
 
 You should see **Atomic Fuel Runner** appear with the icon.
 
@@ -60,16 +84,19 @@ You should see **Atomic Fuel Runner** appear with the icon.
 {
   "manifest_version": 3,
   "name": "Atomic Fuel Runner",
-  "version": "1.0.0",
-  "action": { "default_popup": "popup.html" },
-  "permissions": ["activeTab", "scripting", "storage"],
+  "version": "1.1.0",
+  "permissions": ["activeTab", "scripting", "storage", "sidePanel"],
   "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "action": {},
+  "side_panel": { "default_path": "panel.html" },
   "icons": { "128": "icon128.png" }
 }
 ```
 
-* **activeTab + scripting**: lets the popup inject a function into the **current page** when you check **Run in active tab origin**.
+* **activeTab + scripting**: allows injecting a function into the **current page** when you check **Run in active tab origin**.
 * **storage**: store last used URL/method/headers/body.
+* **sidePanel**: open/reserve the side panel and load `panel.html`.
 * **host_permissions `<all_urls>`**: allow requests to any URL you choose.
 
 ---
@@ -79,13 +106,13 @@ You should see **Atomic Fuel Runner** appear with the icon.
 1. Open a page on the **target origin** if you want to reuse its cookies. Examples:
 
    * For ADO: open any `https://dev.azure.com/<org>/...` page.
-   * For your internal API: open a page on the same domain.
-2. Click the extension icon to open the popup.
+   * For your internal API: open a page on the **same domain**.
+2. Click the extension icon to open the **Side Panel**.
 3. Pick a **method** and enter a **URL**.
 4. **Headers (JSON object)** — examples below.
 5. **Body (raw)** — for POST/PUT/PATCH/DELETE if needed (raw JSON, etc.).
 6. Keep **Run in active tab origin** checked to send from the page (with cookies). Uncheck to send from the extension (usually no cookies cross‑site).
-7. Click **Send**. Inspect **Status**, **Headers**, and **Body** in the popup.
+7. Click **Send**. Inspect **Status**, **Headers**, and **Body** in the panel. Use **Clear** to reset the output.
 
 ### Header snippets
 
@@ -146,42 +173,22 @@ PATCH with JSON:
 * This makes the request behave like any in‑page XHR/fetch: **cookies**, **SameSite**, **CORS**, and enterprise policies all apply normally.
 * When **unchecked**, the request comes from the **extension context**. Cookies usually **won’t** be sent cross‑site and CORS may block you unless the server allows it.
 
----
-
-## Common Workflows
-
-### Azure DevOps (reuse cookies)
-
-1. Open any `dev.azure.com/<org>` page (logged in).
-2. In the popup, method = GET, URL = an ADO REST endpoint (same origin).
-3. Leave **Run in active tab origin** checked.
-4. Headers may be empty or add `Accept: application/json`.
-
-### GitHub API (token required)
-
-1. Use **api.github.com** endpoints.
-2. Provide a token header (see snippet above).
-3. **Run in active tab origin** doesn’t grant `github.com` cookies to `api.github.com`.
+> Tip: Run from a page on the **same origin** you’re calling so cookies apply (e.g., **dev.azure.com** → ADO REST). **github.com** cookies don’t authenticate **api.github.com**; use a bearer token header instead, e.g.: `{ "Authorization": "Bearer <token>", "Accept": "application/vnd.github+json" }`.
 
 ---
 
 ## Troubleshooting
 
-**Popup takes ~10 seconds to appear**
+**No response after “Sending…”**
 
-* First open after install/update can feel slow while Chrome spins up the service worker.
-* Very heavy active tabs can delay `chrome.scripting.executeScript`.
-* Try closing/reopening the popup or testing on a lighter page.
+* If **Run in active tab origin** is checked, the active tab must be a normal `https://` page (not `chrome://`, `edge://`, `file://`, the Web Store, or a PDF viewer) and usually the **same origin** you’re calling.
+* Try unchecking the toggle and calling `https://httpbin.org/anything` to validate extension-context fetches.
+* Some endpoints require a PAT/Bearer even if you’re logged in.
 
-**401/403 even on the right page**
+**CORS errors (when unchecked)**
 
-* Verify you’re on a page of the **exact origin** you’re calling.
-* Some endpoints require **PAT/Bearer** even if you’re logged in via cookies.
-
-**CORS errors** (when unchecked)
-
-* If you send from the extension context, server must allow it via proper CORS headers.
-* Re‑check **Run in active tab origin** to bypass CORS as the call comes from the page.
+* Extension-context requests require proper CORS headers from the server.
+* Re‑check **Run in active tab origin** to send from the page context instead.
 
 **Header JSON error**
 
@@ -201,16 +208,13 @@ PATCH with JSON:
 
 ---
 
-## Roadmap Ideas
+## Roadmap
 
-* Save named request presets.
-* Import/export collections.
-* Auto‑format JSON body and headers.
-* Syntax highlighting.
+* Auto‑format/validate JSON.
+* Collapsible JSON viewer.
 
 ---
 
 ## Contributing
 
 Issues and PRs welcome. Keep it tiny, sharp, and dependency‑free.
-
